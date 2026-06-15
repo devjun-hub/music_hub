@@ -73,6 +73,45 @@ export const DEFAULT_CROSSFADER = 0.5;
 /** 너지 버튼을 누르고 있는 동안 적용되는 임시 피치 보정폭 (%) */
 export const DJ_NUDGE_PERCENT = 4;
 
+/** DJ 필터 노브 (-1=로우패스 완전 닫힘, 0=바이패스, 1=하이패스 완전 닫힘) */
+export const DJ_FILTER_MIN = -1;
+export const DJ_FILTER_MAX = 1;
+export const DJ_FILTER_STEP = 0.01;
+export const DEFAULT_DJ_FILTER = 0;
+
+/** 필터 스윕 주파수 범위 (Hz). 0 부근에서는 사실상 음향 변화가 없는 바이패스에 가깝다. */
+export const DJ_FILTER_LOWPASS_MIN_HZ = 150;
+export const DJ_FILTER_HIGHPASS_MAX_HZ = 6000;
+/** value=0일 때 lowpass 컷오프 (사실상 통과) */
+export const DJ_FILTER_BYPASS_HIGH_HZ = 20000;
+/** value=0일 때 highpass 컷오프 (사실상 통과) */
+export const DJ_FILTER_BYPASS_LOW_HZ = 20;
+
+/** DJ 에코 분음 옵션 (4=1/4, 8=1/8, 16=1/16음표). delayTime = (60/bpm) * (4/division) */
+export const DJ_ECHO_DIVISIONS = [4, 8, 16] as const;
+export type DjEchoDivision = (typeof DJ_ECHO_DIVISIONS)[number];
+export const DEFAULT_DJ_ECHO_DIVISION: DjEchoDivision = 8;
+
+/** 덱당 핫큐 슬롯 수 */
+export const DJ_HOT_CUE_COUNT = 4;
+
+/** 비트 루프 길이 옵션 (비트 단위) */
+export const DJ_LOOP_BEAT_OPTIONS = [1, 2, 4, 8] as const;
+export type DjLoopBeats = (typeof DJ_LOOP_BEAT_OPTIONS)[number];
+export const DEFAULT_DJ_LOOP_BEATS: DjLoopBeats = 4;
+
+/** 마스터 출력 리미터 임계값(dB). 두 덱 + FX 패드가 겹쳐도 클리핑을 방지한다. */
+export const DJ_MASTER_LIMITER_THRESHOLD_DB = -1;
+
+/** FX 드롭 패드 — 마스터 버스에 직접 믹스되어 크로스페이더 위치와 무관하게 들린다. */
+export const DJ_FX_PADS = [
+  { id: "airhorn", label: "에어혼", key: "z" },
+  { id: "siren", label: "사이렌", key: "x" },
+  { id: "riser", label: "라이저", key: "c" },
+  { id: "impact", label: "임팩트", key: "v" },
+] as const satisfies ReadonlyArray<{ id: string; label: string; key: string }>;
+export type DjFxPadId = (typeof DJ_FX_PADS)[number]["id"];
+
 /** 리믹스 트랙 기본 채널 볼륨 (0~1) */
 export const DEFAULT_TRACK_VOLUME = 0.8;
 

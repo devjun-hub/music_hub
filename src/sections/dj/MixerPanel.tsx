@@ -1,14 +1,16 @@
 "use client";
 
 import { DEFAULT_CROSSFADER } from "@/lib/constants";
+import { MasterMeter } from "./MasterMeter";
 
 interface MixerPanelProps {
   crossfade: number;
   onCrossfadeChange: (value: number) => void;
+  getMasterLevel: () => number;
 }
 
 /** 두 덱을 잇는 크로스페이더. 마스터 볼륨은 공통 헤더의 전역 컨트롤을 그대로 쓴다. */
-export function MixerPanel({ crossfade, onCrossfadeChange }: MixerPanelProps) {
+export function MixerPanel({ crossfade, onCrossfadeChange, getMasterLevel }: MixerPanelProps) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-3 lg:justify-center">
       <h2 className="text-center text-sm font-semibold text-foreground-muted">믹서</h2>
@@ -38,6 +40,8 @@ export function MixerPanel({ crossfade, onCrossfadeChange }: MixerPanelProps) {
       >
         중앙으로
       </button>
+
+      <MasterMeter getLevel={getMasterLevel} />
     </div>
   );
 }

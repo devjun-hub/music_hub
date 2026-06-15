@@ -7,6 +7,8 @@ import { LabeledSlider } from "@/components/LabeledSlider";
 import { SamplePicker } from "@/components/SamplePicker";
 import { DJ_EQ_MAX_DB, DJ_EQ_MIN_DB, DJ_PITCH_RANGE_OPTIONS, type DeckId } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
+import { FxPanel } from "./FxPanel";
+import { HotCueLoopPanel } from "./HotCueLoopPanel";
 import type { DeckControls } from "./useDjEngine";
 
 interface DeckPanelProps {
@@ -142,6 +144,8 @@ export function DeckPanel({ deckId, deck }: DeckPanelProps) {
         </button>
       </div>
 
+      <HotCueLoopPanel deckId={deckId} deck={deck} />
+
       <div className="space-y-2 rounded-lg border border-surface-border p-2">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-foreground-muted">피치</span>
@@ -236,6 +240,8 @@ export function DeckPanel({ deckId, deck }: DeckPanelProps) {
           />
         ))}
       </div>
+
+      <FxPanel deckId={deckId} deck={deck} />
 
       <LabeledSlider
         label="볼륨"
