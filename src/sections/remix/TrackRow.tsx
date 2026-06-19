@@ -40,10 +40,24 @@ export function TrackRow({
   disabled,
 }: TrackRowProps) {
   return (
-    <div className="space-y-2 rounded-lg border border-surface-border bg-surface p-3">
+    <div
+      className="space-y-2 rounded-lg border p-3 transition-all duration-200"
+      style={{
+        background: track.muted ? "rgba(239,68,68,0.04)" : "var(--glass-bg)",
+        borderColor: track.solo
+          ? "var(--primary-glow)"
+          : track.muted
+            ? "rgba(239,68,68,0.3)"
+            : "var(--glass-border)",
+        boxShadow: track.solo ? "0 0 12px var(--primary-glow)" : "none",
+      }}
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="shrink-0 rounded bg-surface-border px-1.5 py-0.5 text-xs font-medium text-foreground-muted">
+          <span
+            className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium text-foreground-muted"
+            style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}
+          >
             {SOURCE_LABELS[track.sourceKind]}
           </span>
           <span className="truncate text-sm font-medium text-foreground" title={track.name}>
@@ -60,11 +74,12 @@ export function TrackRow({
             aria-pressed={track.muted}
             aria-label={`${track.name} 뮤트`}
             disabled={disabled}
-            className={`min-h-9 min-w-9 rounded text-xs font-bold transition-colors disabled:opacity-40 ${
+            className={`min-h-9 min-w-9 rounded text-xs font-bold transition-all disabled:opacity-40 ${
               track.muted
                 ? "bg-accent-record text-white"
                 : "border border-surface-border text-foreground-muted hover:text-foreground"
             }`}
+            style={track.muted ? { boxShadow: "0 0 8px rgba(239,68,68,0.5)" } : {}}
           >
             M
           </button>
@@ -74,11 +89,12 @@ export function TrackRow({
             aria-pressed={track.solo}
             aria-label={`${track.name} 솔로`}
             disabled={disabled}
-            className={`min-h-9 min-w-9 rounded text-xs font-bold transition-colors disabled:opacity-40 ${
+            className={`min-h-9 min-w-9 rounded text-xs font-bold transition-all disabled:opacity-40 ${
               track.solo
                 ? "bg-accent-active text-black"
                 : "border border-surface-border text-foreground-muted hover:text-foreground"
             }`}
+            style={track.solo ? { boxShadow: "0 0 8px var(--primary-glow)" } : {}}
           >
             S
           </button>

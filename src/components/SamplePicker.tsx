@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { renderSample } from "@/audio/sampleLibrary";
 import { SAMPLE_LIBRARY, type SampleId } from "@/lib/constants";
+import { barsToMs, formatDuration } from "@/lib/format";
 import { SAMPLE_RENDER_ERROR_MESSAGE } from "@/lib/messages";
 
 interface SamplePickerProps {
@@ -53,9 +54,17 @@ export function SamplePicker({ onSelect, disabled }: SamplePickerProps) {
             >
               <span className="text-sm font-medium text-foreground">{sample.name}</span>
               <span className="text-xs text-foreground-muted">
-                {loadingId === sample.id
-                  ? "렌더링 중…"
-                  : `${sample.description} · ${sample.bpm} BPM`}
+                {loadingId === sample.id ? (
+                  "렌더링 중…"
+                ) : (
+                  <>
+                    {sample.description} ·{" "}
+                    <span className="font-mono tabular-nums">{sample.bpm} BPM</span> ·{" "}
+                    <span className="font-mono tabular-nums">
+                      {formatDuration(barsToMs(sample.bpm, sample.bars))}
+                    </span>
+                  </>
+                )}
               </span>
             </button>
           ))}

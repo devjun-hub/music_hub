@@ -19,17 +19,21 @@ export function TransportBar({
   disabled,
 }: TransportBarProps) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-surface-border bg-surface p-3">
+    <div
+      className="flex items-center gap-3 rounded-lg border p-3"
+      style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+    >
       <button
         type="button"
         onClick={onTogglePlay}
         disabled={disabled || totalDuration <= 0}
         aria-pressed={isPlaying}
-        className={`min-h-14 min-w-28 rounded-full text-base font-semibold transition-colors disabled:opacity-40 ${
+        className={`min-h-14 min-w-28 rounded-full text-base font-semibold transition-all disabled:opacity-40 ${
           isPlaying
             ? "bg-accent-active text-black"
             : "border border-surface-border text-foreground hover:border-foreground-muted"
         }`}
+        style={isPlaying ? { boxShadow: "0 0 16px var(--primary-glow)" } : {}}
       >
         {isPlaying ? "정지" : "재생"}
       </button>

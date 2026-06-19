@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { DeckEqBand } from "@/audio/dj/deckEngine";
 import { FileDropZone } from "@/components/FileDropZone";
-import { LabeledSlider } from "@/components/LabeledSlider";
 import { SamplePicker } from "@/components/SamplePicker";
-import { DJ_EQ_MAX_DB, DJ_EQ_MIN_DB, DJ_PITCH_RANGE_OPTIONS, type DeckId } from "@/lib/constants";
+import { DJ_PITCH_RANGE_OPTIONS, type DeckId } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
 import { FxPanel } from "./FxPanel";
 import { HotCueLoopPanel } from "./HotCueLoopPanel";
+import { JogWheel } from "./JogWheel";
 import type { DeckControls } from "./useDjEngine";
 
 interface DeckPanelProps {
@@ -16,21 +15,14 @@ interface DeckPanelProps {
   deck: DeckControls;
 }
 
-/** EQ 슬라이더 표시 순서 (믹서 채널 스트립 관례를 따라 위에서부터 High → Low) */
-const EQ_BANDS: ReadonlyArray<{ id: DeckEqBand; label: string }> = [
-  { id: "high", label: "High" },
-  { id: "mid", label: "Mid" },
-  { id: "low", label: "Low" },
-];
-
 function formatSigned(value: number, unit: string, digits = 1): string {
   const sign = value > 0 ? "+" : "";
   return `${sign}${value.toFixed(digits)}${unit}`;
 }
 
-/** 덱 1개 분량의 컨트롤: 트랙 로드, 시크, 재생/큐, 너지, 피치, BPM, EQ, 볼륨 */
 export function DeckPanel({ deckId, deck }: DeckPanelProps) {
   const hasTrack = deck.trackName !== null;
+  const [activeTab, setActiveTab] = useState<"cues" | "fx">("cues");
   const [dropError, setDropError] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,215 +36,220 @@ export function DeckPanel({ deckId, deck }: DeckPanelProps) {
     void deck.loadFile(files[0]);
   };
 
-  const resetEq = () => {
-    for (const band of EQ_BANDS) {
-      deck.setEq(band.id, 0);
-    }
-  };
-
   return (
     <FileDropZone
       onFiles={handleDroppedFiles}
       onRejected={setDropError}
-      className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-3"
+      className="flex flex-col gap-3 rounded-xl border p-3 transition-all duration-300 min-h-full justify-between select-none"
+      style={{
+        background: "var(--glass-bg)",
+        borderColor: deck.isPlaying ? "var(--primary-glow)" : "var(--glass-border)",
+        boxShadow: deck.isPlaying
+          ? "0 0 24px var(--primary-glow), inset 0 0 16px rgba(0,0,0,0.2)"
+          : "none",
+      }}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={`text-lg font-bold transition-colors ${
-            deck.isPlaying ? "text-accent-active" : "text-foreground"
-          }`}
-        >
-          덱 {deckId}
-        </span>
-        <label className="flex min-h-9 cursor-pointer items-center justify-center rounded-full border border-surface-border px-3 text-sm font-medium text-foreground-muted transition-colors hover:text-foreground">
-          파일 선택
-          <input type="file" accept="audio/*" className="sr-only" onChange={handleFileChange} />
-        </label>
-      </div>
+      <div className="flex items-stretch gap-3 w-full h-full">
+        {/* 플레이어 메인 영역 (왼쪽) */}
+        <div className="flex-1 flex flex-col gap-2.5 min-h-0">
+          <div className="flex items-center justify-between gap-2 flex-none">
+            <span
+              className={`text-base font-bold transition-colors ${
+                deck.isPlaying ? "text-accent-active" : "text-foreground"
+              }`}
+            >
+              DECK {deckId}
+            </span>
+            <label className="flex h-8 cursor-pointer items-center justify-center rounded-full border border-surface-border px-2.5 text-xs font-semibold text-foreground-muted transition-colors hover:text-foreground">
+              파일 선택
+              <input type="file" accept="audio/*" className="sr-only" onChange={handleFileChange} />
+            </label>
+          </div>
 
-      <p className="truncate text-sm text-foreground-muted" title={deck.trackName ?? undefined}>
-        {deck.trackName ?? "트랙을 불러오세요"}
-      </p>
-      {deck.loadError && <p className="text-sm text-accent-record">{deck.loadError}</p>}
-      {dropError && <p className="text-sm text-accent-record">{dropError}</p>}
+          <p className="truncate text-xs text-foreground-muted flex-none font-medium" title={deck.trackName ?? undefined}>
+            {deck.trackName ?? "트랙을 불러오세요"}
+          </p>
+          {deck.loadError && <p className="text-xs text-accent-record flex-none">{deck.loadError}</p>}
+          {dropError && <p className="text-xs text-accent-record flex-none">{dropError}</p>}
 
-      <SamplePicker onSelect={(name, buffer) => deck.loadBuffer(name, buffer)} />
+          <div className="flex-none">
+            <SamplePicker onSelect={(name, buffer) => deck.loadBuffer(name, buffer)} />
+          </div>
 
-      <div className="space-y-1">
-        <input
-          type="range"
-          min={0}
-          max={deck.duration || 1}
-          step={0.01}
-          value={deck.position}
-          disabled={!hasTrack}
-          onChange={(event) => deck.seek(Number(event.target.value))}
-          aria-label={`덱 ${deckId} 재생 위치`}
-          className="h-6 w-full accent-accent-active disabled:opacity-40"
-        />
-        <div className="flex justify-between font-mono text-xs tabular-nums text-foreground-muted">
-          <span>{formatDuration(deck.position * 1000)}</span>
-          <span>{formatDuration(deck.duration * 1000)}</span>
+          {/* 조그 휠 */}
+          <div className="mx-auto w-full max-w-[38dvh] max-h-[38dvh] aspect-square flex-1 flex items-center justify-center min-h-[80px] min-w-[80px]">
+            <JogWheel
+              isPlaying={deck.isPlaying}
+              position={deck.position}
+              duration={deck.duration}
+              effectiveBpm={deck.effectiveBpm}
+              trackName={deck.trackName}
+              onSeek={deck.seek}
+              disabled={!hasTrack}
+            />
+          </div>
+
+          {/* 시크 바 */}
+          <div className="space-y-1 flex-none">
+            <input
+              type="range"
+              min={0}
+              max={deck.duration || 1}
+              step={0.01}
+              value={deck.position}
+              disabled={!hasTrack}
+              onChange={(event) => deck.seek(Number(event.target.value))}
+              aria-label={`덱 ${deckId} 재생 위치`}
+              className="h-5 w-full accent-accent-active disabled:opacity-40"
+            />
+            <div className="flex justify-between font-mono text-[10px] tabular-nums text-foreground-muted">
+              <span>{formatDuration(deck.position * 1000)}</span>
+              <span>{formatDuration(deck.duration * 1000)}</span>
+            </div>
+          </div>
+
+          {/* 재생 제어 단 */}
+          <div className="flex items-center gap-1.5 flex-none">
+            <button
+              type="button"
+              onClick={deck.togglePlay}
+              disabled={!hasTrack}
+              aria-pressed={deck.isPlaying}
+              className={`min-h-10 flex-1 rounded-xl text-xs font-semibold transition-all duration-150 disabled:opacity-40 ${
+                deck.isPlaying
+                  ? "bg-accent-active text-black"
+                  : "border border-surface-border text-foreground hover:border-foreground-muted"
+              }`}
+              style={deck.isPlaying ? { boxShadow: "0 0 16px var(--primary-glow)" } : {}}
+            >
+              {deck.isPlaying ? "PAUSE" : "PLAY"}
+            </button>
+            <button
+              type="button"
+              onClick={deck.cue}
+              disabled={!hasTrack}
+              className="min-h-10 min-w-12 rounded-xl border border-surface-border text-xs font-semibold text-foreground-muted transition-colors hover:text-foreground disabled:opacity-40"
+            >
+              CUE
+            </button>
+            <button
+              type="button"
+              onPointerDown={() => deck.nudge(-1, true)}
+              onPointerUp={() => deck.nudge(-1, false)}
+              onPointerLeave={() => deck.nudge(-1, false)}
+              onPointerCancel={() => deck.nudge(-1, false)}
+              disabled={!hasTrack}
+              aria-label={`덱 ${deckId} 너지 마이너스`}
+              className="min-h-10 min-w-10 touch-none rounded-xl border border-surface-border text-sm text-foreground-muted transition-colors select-none hover:text-foreground active:bg-surface-border disabled:opacity-40 flex items-center justify-center"
+            >
+              ◀
+            </button>
+            <button
+              type="button"
+              onPointerDown={() => deck.nudge(1, true)}
+              onPointerUp={() => deck.nudge(1, false)}
+              onPointerLeave={() => deck.nudge(1, false)}
+              onPointerCancel={() => deck.nudge(1, false)}
+              disabled={!hasTrack}
+              aria-label={`덱 ${deckId} 너지 플러스`}
+              className="min-h-10 min-w-10 touch-none rounded-xl border border-surface-border text-sm text-foreground-muted transition-colors select-none hover:text-foreground active:bg-surface-border disabled:opacity-40 flex items-center justify-center"
+            >
+              ▶
+            </button>
+          </div>
+
+          {/* 핫큐/FX 탭 헤더 */}
+          <div className="flex border-b border-zinc-800 flex-none text-[10px] gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("cues")}
+              className={`flex-1 py-1 font-bold transition-all text-center rounded-t-lg ${
+                activeTab === "cues"
+                  ? "text-accent-active bg-black/40 border-b border-accent-active"
+                  : "text-zinc-500 hover:text-foreground"
+              }`}
+            >
+              HOT CUE / LOOP
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("fx")}
+              className={`flex-1 py-1 font-bold transition-all text-center rounded-t-lg ${
+                activeTab === "fx"
+                  ? "text-accent-active bg-black/40 border-b border-accent-active"
+                  : "text-zinc-500 hover:text-foreground"
+              }`}
+            >
+              EFFECTS
+            </button>
+          </div>
+
+          <div className="flex-none">
+            {activeTab === "cues" ? (
+              <HotCueLoopPanel deckId={deckId} deck={deck} />
+            ) : (
+              <FxPanel deckId={deckId} deck={deck} />
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={deck.togglePlay}
-          disabled={!hasTrack}
-          aria-pressed={deck.isPlaying}
-          className={`min-h-14 flex-1 rounded-xl text-base font-semibold transition-colors disabled:opacity-40 ${
-            deck.isPlaying
-              ? "bg-accent-active text-black"
-              : "border border-surface-border text-foreground hover:border-foreground-muted"
-          }`}
-        >
-          {deck.isPlaying ? "일시정지" : "재생"}
-        </button>
-        <button
-          type="button"
-          onClick={deck.cue}
-          disabled={!hasTrack}
-          className="min-h-14 min-w-16 rounded-xl border border-surface-border text-sm font-semibold text-foreground-muted transition-colors hover:text-foreground disabled:opacity-40"
-        >
-          CUE
-        </button>
-        <button
-          type="button"
-          onPointerDown={() => deck.nudge(-1, true)}
-          onPointerUp={() => deck.nudge(-1, false)}
-          onPointerLeave={() => deck.nudge(-1, false)}
-          onPointerCancel={() => deck.nudge(-1, false)}
-          disabled={!hasTrack}
-          aria-label={`덱 ${deckId} 너지 마이너스 (누르고 있는 동안 적용)`}
-          className="min-h-14 min-w-12 touch-none rounded-xl border border-surface-border text-lg text-foreground-muted transition-colors select-none hover:text-foreground active:bg-surface-border disabled:opacity-40"
-        >
-          ◀
-        </button>
-        <button
-          type="button"
-          onPointerDown={() => deck.nudge(1, true)}
-          onPointerUp={() => deck.nudge(1, false)}
-          onPointerLeave={() => deck.nudge(1, false)}
-          onPointerCancel={() => deck.nudge(1, false)}
-          disabled={!hasTrack}
-          aria-label={`덱 ${deckId} 너지 플러스 (누르고 있는 동안 적용)`}
-          className="min-h-14 min-w-12 touch-none rounded-xl border border-surface-border text-lg text-foreground-muted transition-colors select-none hover:text-foreground active:bg-surface-border disabled:opacity-40"
-        >
-          ▶
-        </button>
-      </div>
+        {/* 피치 슬라이더 영역 (오른쪽 세로 배치) */}
+        <div className="w-12 bg-black/40 border border-zinc-800/40 p-2 rounded-xl flex flex-col items-center justify-between py-3 flex-none h-full">
+          <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">TEMPO</span>
 
-      <HotCueLoopPanel deckId={deckId} deck={deck} />
-
-      <div className="space-y-2 rounded-lg border border-surface-border p-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-foreground-muted">피치</span>
-          <div role="group" aria-label={`덱 ${deckId} 피치 범위 선택`} className="flex gap-1">
+          <div role="group" aria-label={`덱 ${deckId} 피치 범위`} className="flex flex-col gap-0.5 w-full">
             {DJ_PITCH_RANGE_OPTIONS.map((range) => (
               <button
                 key={range}
                 type="button"
-                aria-pressed={deck.pitchRange === range}
                 onClick={() => deck.setPitchRange(range)}
-                className={`min-h-7 rounded px-2 text-xs font-medium transition-colors ${
+                className={`h-4 w-full rounded text-[8px] font-bold transition-colors ${
                   deck.pitchRange === range
-                    ? "bg-accent-active text-black"
-                    : "text-foreground-muted hover:text-foreground"
+                    ? "bg-accent-active text-black font-extrabold"
+                    : "text-zinc-500 hover:text-foreground"
                 }`}
               >
                 ±{range}%
               </button>
             ))}
           </div>
-        </div>
-        <LabeledSlider
-          label=""
-          min={-deck.pitchRange}
-          max={deck.pitchRange}
-          step={0.1}
-          value={deck.pitchPercent}
-          onChange={deck.setPitch}
-          formatValue={(value) => formatSigned(value, "%")}
-          ariaLabel={`덱 ${deckId} 피치`}
-        />
-        <div className="flex items-center justify-between font-mono text-xs tabular-nums text-foreground-muted">
-          <span>{deck.effectiveBpm.toFixed(1)} BPM</span>
-          <button
-            type="button"
-            onClick={() => deck.setPitch(0)}
-            className="font-sans text-xs font-medium tracking-normal text-foreground-muted normal-case transition-colors hover:text-foreground"
-          >
-            리셋
-          </button>
+
+          <div className="flex-1 flex items-center justify-center py-4 w-full">
+            <input
+              type="range"
+              {...({ orient: "vertical" } as Record<string, string>)}
+              min={-deck.pitchRange}
+              max={deck.pitchRange}
+              step={0.1}
+              value={deck.pitchPercent}
+              onChange={(e) => deck.setPitch(Number(e.target.value))}
+              className="h-full w-1 cursor-pointer accent-accent-active"
+              style={{ WebkitAppearance: "slider-vertical" }}
+            />
+          </div>
+
+          <div className="flex flex-col items-center gap-1.5 w-full">
+            <span className="text-[8px] font-mono text-zinc-500 font-bold">{deck.effectiveBpm.toFixed(1)} BPM</span>
+            <div className="flex items-center gap-1 w-full justify-center">
+              <button
+                type="button"
+                onClick={deck.matchBpm}
+                className="rounded border border-zinc-800 px-1 py-0.5 text-[8px] font-bold text-zinc-400 hover:text-foreground transition-colors active:scale-95"
+              >
+                SYNC
+              </button>
+              <button
+                type="button"
+                onClick={() => deck.setPitch(0)}
+                className="rounded border border-zinc-800 px-1 py-0.5 text-[8px] font-bold text-zinc-400 hover:text-foreground transition-colors active:scale-95"
+              >
+                RST
+              </button>
+            </div>
+            <span className="text-[8px] font-mono text-zinc-500 font-bold">{formatSigned(deck.pitchPercent, "%")}</span>
+          </div>
         </div>
       </div>
-
-      <div className="flex items-center gap-2 text-sm">
-        <label className="flex flex-1 items-center gap-2">
-          <span className="text-foreground-muted">BPM</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            min={1}
-            step={0.1}
-            value={deck.bpm}
-            onChange={(event) => {
-              const value = Number(event.target.value);
-              if (!Number.isNaN(value)) deck.setBpm(value);
-            }}
-            className="w-20 rounded border border-surface-border bg-background px-2 py-1 font-mono tabular-nums"
-            aria-label={`덱 ${deckId} 기준 BPM`}
-          />
-        </label>
-        <button
-          type="button"
-          onClick={deck.matchBpm}
-          className="min-h-9 rounded-full border border-surface-border px-4 text-sm font-medium text-foreground-muted transition-colors hover:text-foreground"
-        >
-          매치
-        </button>
-      </div>
-
-      <div className="space-y-2 rounded-lg border border-surface-border p-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-foreground-muted">EQ</span>
-          <button
-            type="button"
-            onClick={resetEq}
-            className="text-xs font-medium text-foreground-muted transition-colors hover:text-foreground"
-          >
-            리셋
-          </button>
-        </div>
-        {EQ_BANDS.map((band) => (
-          <LabeledSlider
-            key={band.id}
-            label={band.label}
-            min={DJ_EQ_MIN_DB}
-            max={DJ_EQ_MAX_DB}
-            step={0.5}
-            value={deck.eq[band.id]}
-            onChange={(value) => deck.setEq(band.id, value)}
-            formatValue={(value) => formatSigned(value, "dB")}
-            ariaLabel={`덱 ${deckId} ${band.label} EQ`}
-          />
-        ))}
-      </div>
-
-      <FxPanel deckId={deckId} deck={deck} />
-
-      <LabeledSlider
-        label="볼륨"
-        min={0}
-        max={1}
-        step={0.01}
-        value={deck.volume}
-        onChange={deck.setVolume}
-        formatValue={(value) => `${Math.round(value * 100)}%`}
-        ariaLabel={`덱 ${deckId} 채널 볼륨`}
-      />
     </FileDropZone>
   );
 }

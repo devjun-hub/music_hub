@@ -5,7 +5,7 @@ import { AudioEngineProvider } from "@/audio/AudioEngineProvider";
 import { AudioUnlockGate } from "@/components/AudioUnlockGate";
 import { BrowserSupportNotice } from "@/components/BrowserSupportNotice";
 import { Header } from "@/components/Header";
-import { NavBar } from "@/components/NavBar";
+import { ThemeProvider } from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,16 +30,18 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} min-h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
-        <AudioEngineProvider>
-          <BrowserSupportNotice />
-          <Header />
-          <NavBar />
-          <main className="flex-1 pb-16 md:pb-0">{children}</main>
-          <AudioUnlockGate />
-        </AudioEngineProvider>
+      <body className="flex min-h-[100dvh] w-screen flex-col bg-background select-none">
+        <ThemeProvider>
+          <AudioEngineProvider>
+            <BrowserSupportNotice />
+            <Header />
+            <main className="flex-1 order-1 md:order-none">{children}</main>
+            <AudioUnlockGate />
+          </AudioEngineProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -93,7 +93,10 @@ export function AddTrackPanel({
   })();
 
   return (
-    <div className="space-y-2 rounded-lg border border-surface-border bg-surface p-3">
+    <div
+      className="space-y-2 rounded-lg border p-3"
+      style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+    >
       <h2 className="text-sm font-semibold text-foreground-muted">트랙 추가</h2>
       <div className="flex flex-col gap-2 sm:flex-row">
         <button
@@ -101,11 +104,12 @@ export function AddTrackPanel({
           onClick={() => (isRecording ? recorder.stop() : void recorder.start())}
           disabled={disabled || isBusy}
           aria-pressed={isRecording}
-          className={`min-h-11 flex-1 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 ${
+          className={`min-h-11 flex-1 rounded-full text-sm font-semibold transition-all disabled:opacity-50 ${
             isRecording
               ? "animate-pulse bg-accent-record text-white"
               : "border border-surface-border text-foreground hover:border-foreground-muted"
           }`}
+          style={isRecording ? { boxShadow: "0 0 14px rgba(239,68,68,0.5)" } : {}}
         >
           {recordLabel}
         </button>

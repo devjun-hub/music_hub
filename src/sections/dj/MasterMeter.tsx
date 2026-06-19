@@ -40,7 +40,7 @@ export function MasterMeter({
       const level = Math.min(Math.max(getLevel(), 0), 1);
       const bar = barRef.current;
       if (bar) {
-        bar.style.width = `${level * 100}%`;
+        bar.style.height = `${level * 100}%`;
         bar.style.backgroundColor = colorForLevel(level, redFrom);
       }
       frame = requestAnimationFrame(tick);
@@ -50,13 +50,12 @@ export function MasterMeter({
   }, [getLevel, redFrom]);
 
   return (
-    <div className="space-y-1">
-      <span className="text-xs font-semibold text-foreground-muted">마스터 레벨</span>
-      <div className="relative h-2 w-full overflow-hidden rounded-full bg-background">
-        <div ref={barRef} className="h-full w-0" />
+    <div className="flex flex-col items-center gap-1.5 h-full">
+      <div className="relative w-2.5 h-28 overflow-hidden rounded bg-black/60 border border-surface-border/50 flex flex-col justify-end">
+        <div ref={barRef} className="w-full absolute bottom-0 left-0 right-0 transition-[height,background-color] duration-75" />
         <div
-          className="absolute inset-y-0 w-px bg-foreground-muted"
-          style={{ left: `${redFrom * 100}%` }}
+          className="absolute inset-x-0 h-0.5 bg-red-500 opacity-60"
+          style={{ bottom: `${redFrom * 100}%` }}
           aria-hidden="true"
         />
       </div>

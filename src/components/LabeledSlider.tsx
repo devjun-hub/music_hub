@@ -1,14 +1,12 @@
 "use client";
 
 interface LabeledSliderProps {
-  /** 슬라이더 왼쪽에 표시할 짧은 라벨. 같은 패널 내 정렬을 위해 빈 문자열도 허용한다. */
   label: string;
   value: number;
   min: number;
   max: number;
   step?: number;
   onChange: (value: number) => void;
-  /** 오른쪽 값 표시 포맷. 기본은 그대로 숫자 출력. */
   formatValue?: (value: number) => string;
   ariaLabel: string;
   disabled?: boolean;
@@ -28,7 +26,9 @@ export function LabeledSlider({
 }: LabeledSliderProps) {
   return (
     <div className="flex items-center gap-3">
-      <span className="w-12 shrink-0 text-xs font-medium text-foreground-muted">{label}</span>
+      <span className="w-12 shrink-0 text-[11px] font-medium uppercase tracking-wider text-foreground-muted">
+        {label}
+      </span>
       <input
         type="range"
         min={min}
@@ -38,9 +38,9 @@ export function LabeledSlider({
         disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
         aria-label={ariaLabel}
-        className="h-6 flex-1 accent-accent-active disabled:opacity-40"
+        className="flex-1"
       />
-      <span className="w-16 shrink-0 text-right font-mono text-xs tabular-nums text-foreground-muted">
+      <span className="w-16 shrink-0 text-right font-mono text-[11px] tabular-nums text-foreground-muted">
         {formatValue ? formatValue(value) : value}
       </span>
     </div>

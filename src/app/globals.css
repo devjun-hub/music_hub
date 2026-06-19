@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* ── Base dark tokens ──────────────────────────── */
 :root {
   --background: #09090b;
   --surface: #18181b;
@@ -7,7 +8,50 @@
   --foreground: #f4f4f5;
   --foreground-muted: #a1a1aa;
   --accent-record: #ef4444;
-  --accent-active: #22c55e;
+
+  /* Glass morphism */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg-hover: rgba(255, 255, 255, 0.055);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.16);
+
+  /* Theme: Cyan (default) */
+  --primary: #06b6d4;
+  --primary-dim: rgba(6, 182, 212, 0.12);
+  --primary-glow: rgba(6, 182, 212, 0.35);
+  --accent-active: #06b6d4;
+}
+
+/* ── Theme presets ─────────────────────────────── */
+[data-theme="cyan"] {
+  --primary: #06b6d4;
+  --primary-dim: rgba(6, 182, 212, 0.12);
+  --primary-glow: rgba(6, 182, 212, 0.35);
+  --accent-active: #06b6d4;
+}
+[data-theme="purple"] {
+  --primary: #a855f7;
+  --primary-dim: rgba(168, 85, 247, 0.12);
+  --primary-glow: rgba(168, 85, 247, 0.35);
+  --accent-active: #a855f7;
+}
+[data-theme="amber"] {
+  --primary: #f59e0b;
+  --primary-dim: rgba(245, 158, 11, 0.12);
+  --primary-glow: rgba(245, 158, 11, 0.35);
+  --accent-active: #f59e0b;
+}
+[data-theme="emerald"] {
+  --primary: #10b981;
+  --primary-dim: rgba(16, 185, 129, 0.12);
+  --primary-glow: rgba(16, 185, 129, 0.35);
+  --accent-active: #10b981;
+}
+[data-theme="rose"] {
+  --primary: #f43f5e;
+  --primary-dim: rgba(244, 63, 94, 0.12);
+  --primary-glow: rgba(244, 63, 94, 0.35);
+  --accent-active: #f43f5e;
 }
 
 @theme inline {
@@ -18,6 +62,9 @@
   --color-foreground-muted: var(--foreground-muted);
   --color-accent-record: var(--accent-record);
   --color-accent-active: var(--accent-active);
+  --color-primary: var(--primary);
+  --color-primary-dim: var(--primary-dim);
+  --color-primary-glow: var(--primary-glow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -30,4 +77,117 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Custom scrollbar ──────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--foreground-muted); }
+
+/* ── Range input — global theme ────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--surface-border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+input[type="range"]:hover {
+  background: color-mix(in srgb, var(--primary) 30%, var(--surface-border));
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 6px var(--primary-glow);
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 12px var(--primary-glow), 0 0 20px var(--primary-glow);
+  transform: scale(1.15);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: none;
+  box-shadow: 0 0 6px var(--primary-glow);
+  transition: box-shadow 0.15s;
+}
+input[type="range"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Unlock-dot pulse animation ─────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 4px var(--primary-glow); }
+  50%       { box-shadow: 0 0 10px var(--primary-glow), 0 0 20px var(--primary-glow); }
+}
+.dot-unlocked {
+  animation: glow-pulse 2.4s ease-in-out infinite;
+}
+
+/* ── Record dot blink ───────────────────────────── */
+@keyframes record-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.2; }
+}
+.dot-recording {
+  animation: record-blink 1s step-end infinite;
+}
+
+/* ── Reduced motion ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .dot-unlocked { animation: none; }
+  .dot-recording { animation: none; opacity: 1; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* ── Mobile landscape / short screens optimization ── */
+@media (max-height: 500px) {
+  header {
+    height: 2.5rem !important; /* 40px */
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  header span {
+    font-size: 0.75rem !important;
+  }
+  header button, header input {
+    height: 1.75rem !important;
+    font-size: 0.75rem !important;
+  }
+  header [role="group"] {
+    padding-top: 0.125rem !important;
+    padding-bottom: 0.125rem !important;
+  }
+  nav[aria-label="섹션 네비게이션"] {
+    height: 2.5rem !important; /* 40px */
+  }
+  nav[aria-label="섹션 네비게이션"] a {
+    min-height: 2.5rem !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+  /* Smaller margins, paddings and gaps on short screens */
+  .p-4 {
+    padding: 0.5rem !important;
+  }
+  .p-3 {
+    padding: 0.375rem !important;
+  }
+  .gap-4 {
+    gap: 0.5rem !important;
+  }
+  .gap-3 {
+    gap: 0.375rem !important;
+  }
 }

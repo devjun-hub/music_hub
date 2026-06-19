@@ -6,6 +6,7 @@ import { usePadFlash } from "./usePadFlash";
 interface DrumKitVisualProps {
   hitCounts: Record<DrumSoundId, number>;
   onTrigger: (id: DrumSoundId) => void;
+  selectedSoundId: DrumSoundId;
 }
 
 type KitPieceLayout =
@@ -30,13 +31,16 @@ interface KitPieceProps {
   shortcutKey: string;
   hitCount: number;
   onTrigger: (id: DrumSoundId) => void;
+  isSelected: boolean;
 }
 
-function KitPiece({ layout, label, shortcutKey, hitCount, onTrigger }: KitPieceProps) {
+function KitPiece({ layout, label, shortcutKey, hitCount, onTrigger, isSelected }: KitPieceProps) {
   const isFlashing = usePadFlash(hitCount);
   const fillClass = isFlashing
     ? "fill-accent-active/40 stroke-accent-active"
-    : "fill-background stroke-surface-border";
+    : isSelected
+      ? "fill-primary-dim stroke-accent-active"
+      : "fill-background stroke-surface-border";
 
   return (
     <g
@@ -59,6 +63,7 @@ function KitPiece({ layout, label, shortcutKey, hitCount, onTrigger }: KitPieceP
           r={layout.r}
           strokeWidth={2}
           className={`transition-colors ${fillClass}`}
+          style={isSelected ? { filter: "drop-shadow(0 0 6px var(--primary-glow))" } : {}}
         />
       ) : (
         <ellipse
@@ -68,6 +73,7 @@ function KitPiece({ layout, label, shortcutKey, hitCount, onTrigger }: KitPieceP
           ry={layout.ry}
           strokeWidth={2}
           className={`transition-colors ${fillClass}`}
+          style={isSelected ? { filter: "drop-shadow(0 0 6px var(--primary-glow))" } : {}}
         />
       )}
       <text
@@ -85,14 +91,14 @@ function KitPiece({ layout, label, shortcutKey, hitCount, onTrigger }: KitPieceP
 }
 
 /** 실제 드럼 세트와 비슷한 배치의 SVG 모형. 각 부위를 누르면 해당 사운드가 재생된다. */
-export function DrumKitVisual({ hitCounts, onTrigger }: DrumKitVisualProps) {
+export function DrumKitVisual({ hitCounts, onTrigger, selectedSoundId }: DrumKitVisualProps) {
   return (
-    <div className="rounded-xl border border-surface-border bg-surface p-3">
+    <div className="rounded-xl border border-surface-border bg-surface p-2 sm:p-3 mx-auto w-full aspect-square max-h-[38dvh] max-w-[38dvh] flex items-center justify-center">
       <svg
         viewBox="0 0 360 340"
         role="group"
         aria-label="드럼 키트 모형"
-        className="mx-auto h-auto w-full max-w-md"
+        className="mx-auto h-full w-full"
       >
         {KIT_LAYOUT.map((layout) => {
           const sound = DRUM_SOUNDS.find((item) => item.id === layout.id);
@@ -105,6 +111,7 @@ export function DrumKitVisual({ hitCounts, onTrigger }: DrumKitVisualProps) {
               shortcutKey={sound.key}
               hitCount={hitCounts[layout.id]}
               onTrigger={onTrigger}
+              isSelected={layout.id === selectedSoundId}
             />
           );
         })}

@@ -29,7 +29,10 @@ export function HotCueLoopPanel({ deckId, deck }: HotCueLoopPanelProps) {
   };
 
   return (
-    <div className="space-y-2 rounded-lg border border-surface-border p-2">
+    <div
+      className="space-y-2 rounded-lg border p-2"
+      style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+    >
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-foreground-muted">핫큐</span>
         <button
@@ -55,13 +58,14 @@ export function HotCueLoopPanel({ deckId, deck }: HotCueLoopPanelProps) {
               onClick={() => handleCuePress(index)}
               disabled={!hasTrack && !isSet}
               aria-label={`덱 ${deckId} 핫큐 ${index + 1}${isSet ? " (설정됨)" : " (비어있음)"}`}
-              className={`min-h-11 rounded-lg text-sm font-bold transition-colors disabled:opacity-40 ${
+              className={`min-h-11 rounded-lg text-sm font-bold transition-all disabled:opacity-40 ${
                 isSet
                   ? clearMode
                     ? "border-2 border-accent-record text-accent-record"
                     : "border-2 border-accent-active text-accent-active"
                   : "border-2 border-dashed border-surface-border text-foreground-muted hover:text-foreground"
               }`}
+              style={isSet && !clearMode ? { boxShadow: "0 0 8px var(--primary-glow)" } : {}}
             >
               {index + 1}
             </button>
@@ -94,11 +98,12 @@ export function HotCueLoopPanel({ deckId, deck }: HotCueLoopPanelProps) {
             onClick={deck.toggleLoop}
             disabled={!hasTrack}
             aria-pressed={deck.loopActive}
-            className={`min-h-7 rounded-full px-3 text-xs font-semibold transition-colors disabled:opacity-40 ${
+            className={`min-h-7 rounded-full px-3 text-xs font-semibold transition-all disabled:opacity-40 ${
               deck.loopActive
                 ? "bg-accent-active text-black"
                 : "border border-surface-border text-foreground-muted hover:text-foreground"
             }`}
+            style={deck.loopActive ? { boxShadow: "0 0 10px var(--primary-glow)" } : {}}
           >
             {deck.loopActive ? "LOOP ON" : "LOOP"}
           </button>

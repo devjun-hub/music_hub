@@ -40,6 +40,7 @@ const ELAPSED_TICK_MS = 100;
  */
 export function useVocalRecorder(onComplete: (buffer: AudioBuffer) => void) {
   const [state, setState] = useState<VocalRecorderState>(INITIAL_STATE);
+  const [isMonitoring, setIsMonitoring] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -48,8 +49,47 @@ export function useVocalRecorder(onComplete: (buffer: AudioBuffer) => void) {
   const startTimeRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onCompleteRef = useRef(onComplete);
+  const isMonitoringRef = useRef(isMonitoring);
+  const monitorSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const monitorGainRef = useRef<GainNode | null>(null);
+
   useEffect(() => {
     onCompleteRef.current = onComplete;
+  });
+
+  const startMonitor = (stream: MediaStream) => {
+    if (monitorSourceRef.current) return; // 이미 연결됨
+    try {
+      const ctx = getAudioContext();
+      const source = ctx.createMediaStreamSource(stream);
+      const gain = ctx.createGain();
+      gain.gain.value = 1.0;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      monitorSourceRef.current = source;
+      monitorGainRef.current = gain;
+    } catch {
+      // 모니터링은 선택 기능 — 실패해도 녹음에는 영향 없음
+    }
+  };
+
+  const stopMonitor = () => {
+    monitorGainRef.current?.disconnect();
+    monitorSourceRef.current?.disconnect();
+    monitorGainRef.current = null;
+    monitorSourceRef.current = null;
+  };
+
+  useEffect(() => {
+    isMonitoringRef.current = isMonitoring;
+    // 녹음 중에 토글하면 즉시 반영
+    if (streamRef.current) {
+      if (isMonitoring) {
+        startMonitor(streamRef.current);
+      } else {
+        stopMonitor();
+      }
+    }
   });
 
   const clearTimer = useCallback(() => {
@@ -61,6 +101,7 @@ export function useVocalRecorder(onComplete: (buffer: AudioBuffer) => void) {
 
   const handleStop = useCallback(async () => {
     clearTimer();
+    stopMonitor();
     stopMediaStream(streamRef.current);
     streamRef.current = null;
 
@@ -101,6 +142,8 @@ export function useVocalRecorder(onComplete: (buffer: AudioBuffer) => void) {
     }
 
     streamRef.current = stream;
+    if (isMonitoringRef.current) startMonitor(stream);
+
     const mimeType = pickRecorderMimeType();
     mimeTypeRef.current = mimeType ?? "audio/webm";
 
@@ -135,6 +178,7 @@ export function useVocalRecorder(onComplete: (buffer: AudioBuffer) => void) {
   useEffect(() => {
     return () => {
       clearTimer();
+      stopMonitor();
       const recorder = mediaRecorderRef.current;
       if (recorder && recorder.state !== "inactive") {
         recorder.onstop = null;
@@ -144,5 +188,5 @@ export function useVocalRecorder(onComplete: (buffer: AudioBuffer) => void) {
     };
   }, [clearTimer]);
 
-  return { state, start, stop };
+  return { state, start, stop, isMonitoring, setIsMonitoring };
 }

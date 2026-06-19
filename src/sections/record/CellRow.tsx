@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { CellEffects } from "./CellEffects";
 import { CellWaveform } from "./CellWaveform";
 import { LabeledSlider } from "@/components/LabeledSlider";
@@ -36,6 +37,9 @@ export function CellRow({
   onRemove,
   disabled,
 }: CellRowProps) {
+  const [showFx, setShowFx] = useState(false);
+  const hasActiveFx = cell.echoEnabled || cell.reverbEnabled || cell.autotuneEnabled;
+
   return (
     <div className="space-y-2 rounded-lg border border-surface-border bg-surface p-3">
       <div className="flex items-center justify-between gap-2">
@@ -47,10 +51,28 @@ export function CellRow({
             {cell.name}
           </span>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <span className="font-mono text-xs tabular-nums text-foreground-muted">
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="font-mono text-xs tabular-nums text-foreground-muted mr-1">
             {formatDuration(cell.duration * 1000)}
           </span>
+          <button
+            type="button"
+            onClick={() => setShowFx(!showFx)}
+            aria-pressed={showFx}
+            className={`min-h-9 px-2.5 rounded border text-xs font-semibold transition-colors flex items-center gap-1 ${
+              showFx
+                ? "bg-primary text-black border-primary"
+                : "border-surface-border text-foreground-muted hover:text-foreground hover:bg-surface-border"
+            }`}
+          >
+            <span>FX</span>
+            {hasActiveFx && (
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${showFx ? "bg-black" : "bg-accent-active"}`}
+                style={!showFx ? { boxShadow: "0 0 6px var(--primary-glow)" } : {}}
+              />
+            )}
+          </button>
           <button
             type="button"
             onClick={onRemove}
@@ -76,12 +98,14 @@ export function CellRow({
         ariaLabel={`${cell.name} 볼륨`}
       />
 
-      <CellEffects
-        cell={cell}
-        onEchoChange={onEchoChange}
-        onReverbChange={onReverbChange}
-        onAutotuneChange={onAutotuneChange}
-      />
+      {showFx && (
+        <CellEffects
+          cell={cell}
+          onEchoChange={onEchoChange}
+          onReverbChange={onReverbChange}
+          onAutotuneChange={onAutotuneChange}
+        />
+      )}
     </div>
   );
 }

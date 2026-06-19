@@ -5,3 +5,8 @@ export function formatDuration(ms: number): string {
   const seconds = totalSeconds % 60;
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
+
+/** BPM과 4/4박자 마디 수로부터 재생 길이(ms)를 계산한다. */
+export function barsToMs(bpm: number, bars: number): number {
+  return ((60 / bpm) * 4 * bars) * 1000;
+}

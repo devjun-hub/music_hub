@@ -11,6 +11,7 @@ interface FileDropZoneProps {
   onRejected?: (message: string) => void;
   disabled?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   children: ReactNode;
 }
 
@@ -18,7 +19,7 @@ interface FileDropZoneProps {
  * 자식 영역 전체를 드롭 대상으로 만든다. 드래그 중에는 점선 테두리 오버레이로
  * 즉시 피드백을 주고, 드롭된 파일을 오디오 여부로 1차 필터링해 전달한다.
  */
-export function FileDropZone({ onFiles, onRejected, disabled, className, children }: FileDropZoneProps) {
+export function FileDropZone({ onFiles, onRejected, disabled, className, style, children }: FileDropZoneProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const dragCounter = useRef(0);
 
@@ -65,6 +66,7 @@ export function FileDropZone({ onFiles, onRejected, disabled, className, childre
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       className={`relative ${className ?? ""}`}
+      style={style}
     >
       {children}
       {isDragActive && !disabled && (

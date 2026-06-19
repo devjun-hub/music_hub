@@ -4,8 +4,8 @@ import type { ChangeEvent } from "react";
 import { useState } from "react";
 import { AUDIO_FILE_ACCEPT, decodeAudioFile } from "@/audio/decodeAudioFile";
 import { SamplePicker } from "@/components/SamplePicker";
-import { formatDuration } from "@/lib/format";
 import { useVocalRecorder } from "./useVocalRecorder";
+import { RecordingMonitorDialog } from "./RecordingMonitorDialog";
 import type { CellKind } from "./useRecordEngine";
 
 interface AddCellPanelProps {
@@ -25,6 +25,7 @@ export function AddCellPanel({ onAddCell, vocalCount, disabled }: AddCellPanelPr
   const recorder = useVocalRecorder((buffer) => {
     onAddCell(`보컬 ${vocalCount + 1}`, "vocal", buffer);
   });
+  const { isMonitoring, setIsMonitoring } = recorder;
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -45,15 +46,25 @@ export function AddCellPanel({ onAddCell, vocalCount, disabled }: AddCellPanelPr
   const isRecording = status === "recording";
   const isBusy = status === "requesting-permission" || status === "processing";
 
-  const recordLabel = (() => {
-    if (isRecording) return `보컬 녹음 중지 · ${formatDuration(elapsedMs)}`;
+  const busyLabel = (() => {
     if (status === "requesting-permission") return "권한 요청 중…";
     if (status === "processing") return "처리 중…";
     return "보컬 녹음";
   })();
 
   return (
-    <div className="space-y-2 rounded-lg border border-surface-border bg-surface p-3">
+    <>
+    <RecordingMonitorDialog
+      isOpen={isRecording}
+      elapsedMs={elapsedMs}
+      isMonitoring={isMonitoring}
+      onToggleMonitoring={() => setIsMonitoring(!isMonitoring)}
+      onStop={recorder.stop}
+    />
+    <div
+      className="space-y-2 rounded-lg border p-3"
+      style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+    >
       <h2 className="text-sm font-semibold text-foreground-muted">셀 추가</h2>
       <div className="flex flex-col gap-2 sm:flex-row">
         <label
@@ -73,16 +84,11 @@ export function AddCellPanel({ onAddCell, vocalCount, disabled }: AddCellPanelPr
         </label>
         <button
           type="button"
-          onClick={() => (isRecording ? recorder.stop() : void recorder.start())}
-          disabled={disabled || isBusy}
-          aria-pressed={isRecording}
-          className={`min-h-11 flex-1 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 ${
-            isRecording
-              ? "animate-pulse bg-accent-record text-white"
-              : "border border-surface-border text-foreground hover:border-foreground-muted"
-          }`}
+          onClick={() => void recorder.start()}
+          disabled={disabled || isBusy || isRecording}
+          className="min-h-11 flex-1 rounded-full border border-surface-border text-sm font-semibold text-foreground transition-colors hover:border-foreground-muted disabled:opacity-50"
         >
-          {recordLabel}
+          {isBusy ? busyLabel : "보컬 녹음"}
         </button>
       </div>
       {status === "error" && errorMessage && (
@@ -100,5 +106,6 @@ export function AddCellPanel({ onAddCell, vocalCount, disabled }: AddCellPanelPr
         disabled={disabled}
       />
     </div>
+    </>
   );
 }
